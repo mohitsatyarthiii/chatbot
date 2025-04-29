@@ -49,7 +49,7 @@ const App: React.FC = () => {
 
   const fetchChatResponse = async (question: string) => {
     try {
-      const response = await axios.post(import.meta.env.VITE_CHATBOT_API_URL, { question });
+      const response = await axios.post('http://65.2.28.184:5000/query', { question });
       return response.data.answer || "I'm sorry, I didn't understand that.";
     } catch (error) {
       console.error('Error fetching bot response:', error);
@@ -60,7 +60,7 @@ const App: React.FC = () => {
   const fetchGraphData = async (keyword: string) => {
     try {
       const response = await axios.post(
-        import.meta.env.VITE_NEO4J_REST_API,
+        'http://65.2.28.184:7474/db/neo4j/tx/commit',
         {
           statements: [
             {
@@ -72,8 +72,8 @@ const App: React.FC = () => {
         },
         {
           auth: {
-            username: import.meta.env.VITE_NEO4J_USERNAME,
-            password: import.meta.env.VITE_NEO4J_PASSWORD
+            username: 'neo4j',
+            password: 'tridiagonal'
           },
           headers: { 'Content-Type': 'application/json' }
         }
