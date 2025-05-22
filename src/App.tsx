@@ -67,7 +67,7 @@ const App: React.FC = () => {
 
   const fetchChatResponse = async (question: string) => {
     try {
-      const response = await axios.post(`${import.meta.env.API_BASE_URL}/query`, { question });
+      const response = await axios.post('https://65.2.28.184:5000/query', { question });
       return response.data.answer || "I'm sorry, I didn't understand that.";
     } catch (error) {
       console.error('Error fetching bot response:', error);
