@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import neo4j from 'neo4j-driver';
 import { FaTimes, FaCheck, FaMicrophone } from 'react-icons/fa';
 import iconImage from "/aiveee.jpg"
 
@@ -11,7 +10,6 @@ const App: React.FC = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [pendingAIText, setPendingAIText] = useState('');
   const [animatedText, setAnimatedText] = useState('');
-  const [graphData, setGraphData] = useState<{ nodes: any[]; links: any[] }>({ nodes: [], links: [] });
   const fgRef = useRef<any>(null);
 
   const [isChatbotOpen, setIsChatbotOpen] = useState(false);
@@ -31,7 +29,6 @@ const App: React.FC = () => {
   const dragStartPos = useRef<{ x: number; y: number } | null>(null);
   const [isMinimized, setIsMinimized] = useState(false);
 
-  const driver = neo4j.driver('bolt://65.2.28.184:7474', neo4j.auth.basic('neo4j', 'Neo4j@123'));
 
   const recognition = (window as any).webkitSpeechRecognition
     ? new (window as any).webkitSpeechRecognition()
@@ -78,59 +75,13 @@ const App: React.FC = () => {
     }
   };
 
-  const fetchGraphData = async (keyword: string) => {
-    try {
-      const response = await axios.post(
-        'http://65.2.28.184:7474/db/neo4j/tx/commit',
-        {
-          statements: [
-            {
-              statement: 
-                'MATCH (n)-[r]->(m) WHERE toLower(n.name) CONTAINS toLower($keyword) OR toLower(m.name) CONTAINS toLower($keyword) RETURN n, r, m',
-              parameters: { keyword }
-            }
-          ]
-        },
-        {
-          auth: { username: 'neo4j', password: 'Neo4j@123' },
-          headers: { 'Content-Type': 'application/json' }
-        }
-      );
-
-      const nodesMap = new Map();
-      const links: any[] = [];
-      const results = response.data.results[0]?.data || [];
-
-      results.forEach((row: any) => {
-        const n = row.row[0];
-        const r = row.row[1];
-        const m = row.row[2];
-        const nId = n.id || JSON.stringify(n);
-        const mId = m.id || JSON.stringify(m);
-        const nNode = { id: nId, name: n.name || 'Unnamed Node', label: n.label || 'Node' };
-        const mNode = { id: mId, name: m.name || 'Unnamed Node', label: m.label || 'Node' };
-
-        nodesMap.set(nNode.id, nNode);
-        nodesMap.set(mNode.id, mNode);
-        links.push({ source: nNode.id, target: mNode.id, label: r.type });
-      });
-
-      setGraphData({ nodes: Array.from(nodesMap.values()), links });
-
-      setTimeout(() => {
-        fgRef.current?.zoomToFit(400, 80);
-      }, 300);
-    } catch (err) {
-      console.error('Graph fetch error:', err);
-    }
-  };
 
   const handleUserInput = async (text: string) => {
     if (!text.trim()) return;
     setChatHistory(prev => [...prev, { type: 'user', text }]);
     setInputText('');
     setIsTyping(true);
-    const [response, _] = await Promise.all([fetchChatResponse(text), fetchGraphData(text)]);
+    const [response] = await Promise.all([fetchChatResponse(text)]);
     setPendingAIText(response);
   };
 
